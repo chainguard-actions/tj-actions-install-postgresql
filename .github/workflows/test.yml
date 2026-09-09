@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  shellcheck:
+    name: Run shellcheck
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout to branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: shellcheck
+        uses: reviewdog/action-shellcheck@22f96e34e9185b642c5567cc26d1df952f5c9d10 # v1.28
+
+  test:
+    name: Test setup-postgresql
+    runs-on: ${{ matrix.platform }}
+    concurrency: ${{ matrix.platform }}-${{ matrix.postgresql_version }}-${{ github.ref }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        postgresql_version: [12, 14, 15, 16, 17]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Run setup-postgresql
+        uses: ./
+        with:
+          postgresql-version: ${{ matrix.postgresql_version }}
+      - name: Verify PostgreSQL
+        env:
+          PG_VERSION: ${{ matrix.postgresql_version }}
+        run: |
+          pg_dump --version | grep -q "pg_dump (PostgreSQL) $PG_VERSION.*"
+          psql --version | grep -q "psql (PostgreSQL) $PG_VERSION.*"
+          pg_restore --version | grep -q "pg_restore (PostgreSQL) $PG_VERSION.*"

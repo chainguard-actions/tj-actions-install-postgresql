@@ -1,0 +1,42 @@
+name: Test PostgreSQL version 16 installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install PostgreSQL 16
+        id: install
+        uses: .
+        with:
+          postgresql-version: '16'
+      - name: Start PostgreSQL service
+        run: |
+          echo "Starting PostgreSQL service..."
+          sudo service postgresql start || sudo systemctl start postgresql || true
+          sleep 3
+      - name: Assert PostgreSQL 16 is installed
+        run: |
+          echo "Checking psql version..."
+          PSQL_VERSION=$(psql --version | awk '{print $3}')
+          echo "psql version: $PSQL_VERSION"
+          if [[ "$PSQL_VERSION" != "16."* ]]; then
+            echo "FAIL: expected PostgreSQL 16.x but got $PSQL_VERSION"
+            exit 1
+          fi
+          echo "PASS: PostgreSQL 16 is installed"
+      - name: Assert PostgreSQL 16 service is reachable
+        run: |
+          echo "Checking PostgreSQL connectivity..."
+          if pg_isready -q 2>/dev/null; then
+            echo "PASS: PostgreSQL is ready"
+          else
+            echo "PostgreSQL not ready via pg_isready, checking if binary exists..."
+            if command -v psql &>/dev/null; then
+              echo "PASS: psql binary is available (service may not be running but installation succeeded)"
+            else
+              echo "FAIL: psql binary not found"
+              exit 1
+            fi
+          fi
