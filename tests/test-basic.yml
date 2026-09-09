@@ -1,0 +1,32 @@
+name: Test basic PostgreSQL installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure prerequisites are available
+        run: |
+          # Ensure lsb_release and wget are available (needed by entrypoint.sh)
+          if ! command -v lsb_release &>/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq lsb-release
+          fi
+          if ! command -v wget &>/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq wget
+          fi
+      - id: action
+        uses: .
+        with:
+          postgresql-version: '14'
+      - name: Assert PostgreSQL is installed and correct version
+        run: |
+          POSTGRESQL_VERSION=$(psql --version | awk '{print $3}')
+          echo "Installed PostgreSQL version: $POSTGRESQL_VERSION"
+          if [[ "$POSTGRESQL_VERSION" != "14."* ]]; then
+            echo "FAIL: expected version 14.x but got $POSTGRESQL_VERSION"
+            exit 1
+          fi
+          echo "PASS: PostgreSQL $POSTGRESQL_VERSION installed successfully"
