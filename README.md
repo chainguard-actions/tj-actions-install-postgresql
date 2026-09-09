@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v3 | [`v3`](https://github.com/chainguard-actions/tj-actions-install-postgresql/tree/v3) | [`a889ed6`](https://github.com/tj-actions/install-postgresql/commit/a889ed6c6fa05022333ed4101295bb1d604f97a8) |
+| v3.2.0 | [`v3.2.0`](https://github.com/chainguard-actions/tj-actions-install-postgresql/tree/v3.2.0) | [`a889ed6`](https://github.com/tj-actions/install-postgresql/commit/a889ed6c6fa05022333ed4101295bb1d604f97a8) |
 
 ## Privacy
 
