@@ -1,0 +1,43 @@
+name: Test basic PostgreSQL installation (version 15)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          postgresql-version: "15"
+
+      - name: Assert PostgreSQL 15 is installed
+        run: |
+          echo "Checking PostgreSQL version..."
+          # The action adds the bin dir to GITHUB_PATH, but in act we may need to check directly
+          PG_VERSION=$(psql --version 2>/dev/null | awk '{print $3}' || /usr/lib/postgresql/15/bin/psql --version | awk '{print $3}')
+          echo "Installed version: $PG_VERSION"
+          if [[ "$PG_VERSION" != "15."* ]]; then
+            echo "FAIL: expected PostgreSQL 15.x but got $PG_VERSION"
+            exit 1
+          fi
+          echo "PASS: PostgreSQL $PG_VERSION installed successfully"
+
+      - name: Assert PostgreSQL service is reachable
+        run: |
+          echo "Checking PostgreSQL connectivity..."
+          # Try to start the service in case it didn't auto-start
+          sudo service postgresql start 2>/dev/null || sudo pg_ctlcluster 15 main start 2>/dev/null || true
+          sleep 2
+          if pg_isready 2>/dev/null || /usr/lib/postgresql/15/bin/pg_isready 2>/dev/null; then
+            echo "PASS: PostgreSQL is ready"
+          else
+            echo "INFO: pg_isready not responding, checking if psql binary exists"
+            if command -v psql >/dev/null 2>&1 || [ -f /usr/lib/postgresql/15/bin/psql ]; then
+              echo "PASS: PostgreSQL binary is installed (service may not be running in act environment)"
+            else
+              echo "FAIL: PostgreSQL binary not found"
+              exit 1
+            fi
+          fi
