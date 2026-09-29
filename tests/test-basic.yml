@@ -1,0 +1,29 @@
+name: Test basic PostgreSQL installation (version 15)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          postgresql-version: "15"
+      - name: Assert PostgreSQL 15 is installed and on PATH
+        run: |
+          echo "Checking psql version..."
+          POSTGRESQL_VERSION=$(psql --version | awk '{print $3}')
+          echo "Installed version: $POSTGRESQL_VERSION"
+          if [[ "$POSTGRESQL_VERSION" != "15."* ]]; then
+            echo "FAIL: expected version 15.x but got $POSTGRESQL_VERSION"
+            exit 1
+          fi
+          echo "PASS: PostgreSQL $POSTGRESQL_VERSION installed successfully"
+      - name: Assert pg_dump is available
+        run: |
+          if ! command -v pg_dump &>/dev/null; then
+            echo "FAIL: pg_dump not found on PATH"
+            exit 1
+          fi
+          echo "PASS: pg_dump is available at $(command -v pg_dump)"

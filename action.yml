@@ -1,0 +1,48 @@
+name: install-postgresql
+description: Install PostgreSQL on the GitHub actions runner and verify the installation.
+author: tj-actions
+inputs:
+  postgresql-version:
+    description: 'Version of PostgreSQL. e.g 15'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
+    - run: |
+        bash $GITHUB_ACTION_PATH/entrypoint.sh
+      shell: bash
+      env:
+        # INPUT_<VARIABLE_NAME> is not available in Composite run steps
+        # https://github.community/t/input-variable-name-is-not-available-in-composite-run-steps/127611
+        INPUT_POSTGRESQL_VERSION: ${{ inputs.postgresql-version }}
+    - name: Verify PostgreSQL
+      env:
+        EXPECTED_VERSION: ${{ inputs.postgresql-version }}
+      run: |
+        # Check the postgresql version
+        POSTGRESQL_VERSION=$(psql --version | awk '{print $3}')
+        if [[ "$POSTGRESQL_VERSION" != "$EXPECTED_VERSION."* ]]; then
+          echo "PostgreSQL version $POSTGRESQL_VERSION does not match the expected version $EXPECTED_VERSION.*"
+          exit 1
+        fi
+      shell: bash
+branding:
+  icon: hard-drive
+  color: white
