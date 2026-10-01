@@ -50,15 +50,15 @@ echo "Installed postgresql"
 
 echo "Updating PATH..."
 
-SAFE_POSTGRESQL_VERSION=$(printf '%s' "$INPUT_POSTGRESQL_VERSION" | tr -d '\n\r')
+safe=$(printf '%s' "$INPUT_POSTGRESQL_VERSION" | tr -d '\n\r')
 
 if [[ "$OS" == "NT"* ]] || [[ "$OS" == "MINGW"* ]] || [[ "$OS" == *"MSYS"* ]]; then
     # shellcheck disable=SC2028
-    echo "C:\\Program Files\\PostgreSQL\\$SAFE_POSTGRESQL_VERSION\\bin" >> "$GITHUB_PATH"
+    echo "C:\\Program Files\\PostgreSQL\\$safe\\bin" >> "$GITHUB_PATH"
 elif [[ "$OS" == "Darwin" ]]; then
-    echo "$(brew --prefix postgresql@"${SAFE_POSTGRESQL_VERSION}")/bin" >> "$GITHUB_PATH"
+    echo "$(brew --prefix postgresql@"${safe}")/bin" >> "$GITHUB_PATH"
 else
-    echo "/usr/lib/postgresql/$SAFE_POSTGRESQL_VERSION/bin" >> "$GITHUB_PATH"
+    echo "/usr/lib/postgresql/$safe/bin" >> "$GITHUB_PATH"
 fi
 
 echo "Complete"

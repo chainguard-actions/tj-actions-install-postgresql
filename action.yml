@@ -34,12 +34,12 @@ runs:
         INPUT_POSTGRESQL_VERSION: ${{ inputs.postgresql-version }}
     - name: Verify PostgreSQL
       env:
-        EXPECTED_POSTGRESQL_VERSION: ${{ inputs.postgresql-version }}
+        EXPECTED_VERSION: ${{ inputs.postgresql-version }}
       run: |
         # Check the postgresql version
         POSTGRESQL_VERSION=$(psql --version | awk '{print $3}')
-        if [[ "$POSTGRESQL_VERSION" != "$EXPECTED_POSTGRESQL_VERSION."* ]]; then
-          echo "PostgreSQL version $POSTGRESQL_VERSION does not match the expected version $EXPECTED_POSTGRESQL_VERSION.*"
+        if [[ "$POSTGRESQL_VERSION" != "$EXPECTED_VERSION."* ]]; then
+          echo "PostgreSQL version $POSTGRESQL_VERSION does not match the expected version $EXPECTED_VERSION.*"
           exit 1
         fi
       shell: bash
